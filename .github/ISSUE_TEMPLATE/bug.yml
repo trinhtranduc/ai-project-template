@@ -1,0 +1,44 @@
+name: Bug
+description: Something behaves differently from spec or expectation
+title: "[Bug] "
+labels: ["type:bug"]
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the exact error text, screenshot, or log line.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: production / staging / local, browser, commit SHA
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options: [blocker, high, normal, low]
+    validations:
+      required: true
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of done
+      options:
+        - label: failing check (test or script) reproduces the bug and is committed first
+        - label: fix makes the check pass without editing the check
+        - label: regression covered by an eval or test

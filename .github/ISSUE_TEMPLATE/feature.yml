@@ -1,0 +1,46 @@
+name: Feature / intent
+description: A new capability or change, written as intent (what, why, constraints)
+title: "[Feature] "
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What can't users do today? Who is affected? Evidence if any.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Proposed outcome
+      description: What does "better" look like? Not the implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Affected users and systems
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+  - type: textarea
+    id: questions
+    attributes:
+      label: Open questions
+  - type: input
+    id: intent
+    attributes:
+      label: Intent folder
+      description: Path to intent/<slug>/ once committed
+      placeholder: intent/my-change/
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of done
+      options:
+        - label: spec.md accepted by product owner
+        - label: plan.md reviewed before code
+        - label: all commands in "Verifying your work" pass
+        - label: PR reviewed by a human and closes this issue
