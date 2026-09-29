@@ -1,5 +1,5 @@
 ---
-name: ai-native-sdlc
+name: sdlc
 description: >-
   Run features, bug fixes, and incidents through the AI-native SDLC loop from
   Anthropic's "AI-native SDLC playbook" (Claude Academy): capture intent.md,
@@ -31,7 +31,7 @@ intent.md -> spec.md -> plan.md -> diff + checks -> PR + review findings -> inci
 | `plan.md` | `intent/<slug>/plan.md` | engineer; tech lead for higher-risk |
 | review policy | `REVIEW.md` at repo root | tech lead |
 | agent memory | `AGENTS.md` or `CLAUDE.md` at repo root | code owners via PR |
-| skills | `.agents/skills/<name>/SKILL.md` or `.cursor/skills/<name>/SKILL.md` | policy owner |
+| skills | `.agents/skills/<name>/SKILL.md` (`.claude/skills` and `.cursor/skills` are symlinks to it) | policy owner |
 | issue templates | `.github/ISSUE_TEMPLATE/{feature,bug}.yml` | tech lead |
 | PR template | `.github/pull_request_template.md` | tech lead |
 
@@ -50,8 +50,8 @@ The issue is the ticket; `intent.md` is the reasoning behind it; the PR closes i
 2. **Link both ways**: put `Issue: #<n>` on the second line of `intent.md`; the
    issue body links to `intent/<slug>/`.
 3. **Branch off the issue**: `git checkout -b <type>/<n>-<slug>` (e.g.
-   `feat/42-broker-filters`, `fix/57-rebate-rounding`). Never commit to `main`.
-4. **Commits reference the issue**: `feat(brokers): add regulator filter (#42)`.
+   `feat/42-item-filters`, `fix/57-price-rounding`). Never commit to `main`.
+4. **Commits reference the issue**: `feat(items): add category filter (#42)`.
 5. **Open the PR with the template**: `gh pr create --fill` then edit the body so it
    has `Closes #<n>`, the plan link, verification output, and the review passes.
    One issue per PR; if the work splits, open a second issue.
@@ -94,14 +94,14 @@ Copy this checklist into the task and tick as you go:
 - [ ] 0 Research intent/<slug>/research.md when studying a URL, competitor, or unknown domain (skill: research)
 - [ ] 1 Intent   intent/<slug>/intent.md written in the user's own words, accepted
 - [ ] 1b Issue   gh issue create from the template; Issue: #n added to intent.md
-- [ ] 2 Spec     spec.md produced with project skills loaded, concerns flagged, accepted
+- [ ] 2 Spec     spec.md produced with project skills loaded, concerns flagged, accepted (skill: spec-design)
 - [ ] 3 Plan     plan.md: files, order, risks, proof; reviewed before any edit
-- [ ] 3b Branch  git checkout -b <type>/<n>-<slug>
+- [ ] 3b Branch  git checkout -b <type>/<n>-<slug> (skill: git-workflow)
 - [ ] 4 Build    implement; update plan.md in the same commit if it diverges
 - [ ] 5 Verify   run every command in "Verifying your work"; paste the output
 - [ ] 6 Review   self-review against REVIEW.md passes (bugs, security, compliance)
-- [ ] 6b PR      gh pr create with the template; "Closes #n"; wait for human approval
-- [ ] 7 Close    mistake seen twice -> AGENTS.md; incident -> new intent.md + eval
+- [ ] 6b PR      gh pr create with the template; "Closes #n"; wait for human approval (skill: git-workflow)
+- [ ] 7 Close    mistake seen twice -> AGENTS.md (skill: agent-memory); incident -> new intent.md + eval
 ```
 
 ### 0. Research (when the problem is not already understood)
@@ -124,7 +124,7 @@ branch are exempt.
 
 ### 2. Requirements and design
 
-Read `intent.md` and produce `spec.md`. Load whichever project skills act as
+Read `intent.md` and produce `spec.md` with the `spec-design` skill. Load whichever project skills act as
 policy (security, performance, design, accessibility, SEO). Flag every place a
 policy cannot be satisfied or two policies conflict; the user resolves those
 before engineering starts. Carry forward or answer the open questions from
@@ -157,7 +157,7 @@ the mock or the existing design, adjust; two or three rounds is normal.
 State a quantifiable target before starting ("page renders N cards and lint
 is clean"). Run all checks before reporting done and paste the output.
 
-Bug fixes: reproduce as a failing check first (a test, a script, or a
+Bug fixes: use the `debugging` skill when the cause is unknown. Reproduce as a failing check first (a test, a script, or a
 recorded repro), commit it, then fix the code without weakening the check.
 If a test fails, fix the code, not the test.
 
@@ -187,7 +187,7 @@ replace human approval; the agent that wrote the code cannot approve it.
 
 Skills and `AGENTS.md` make violations rare; hooks, permissions, branch
 protection, and CI make them close to impossible. Anything that must always
-hold needs the deterministic layer. Rules for hooks:
+hold needs the deterministic layer. Rules for hooks (templates in the `ci-guardrails` skill):
 
 - Build-phase hooks are fast and scoped to the changed file (block edits to
   protected paths such as migrations, run lint after edits, keep credentials
@@ -197,20 +197,26 @@ hold needs the deterministic layer. Rules for hooks:
 - The agent may act up to the production gate and cannot pass it. Anything it
   writes arrives as a PR; there is no route to `main`.
 
-## Companion personal skills (`~/.cursor/skills/`)
+## Companion skills (`.agents/skills/`)
 
-Load the matching skill instead of improvising:
+Load the matching skill instead of improvising. `.claude/skills` and
+`.cursor/skills` are symlinks to the same folder, so every agent sees one set.
 
 | Skill | Stage |
 |-------|--------|
 | `research` | Before intent: competitors, URLs, codebase archaeology |
+| `spec-design` | Design: spec.md from intent.md, acceptance criteria, policy conflicts, ADR-lite |
+| `git-workflow` | Build: issue, branch, commit style, PR body, never self-merge |
 | `testing-strategy` | Build/test: cheapest proof, failing test first, browser UI |
+| `debugging` | Build/test: reproduce, isolate, hypothesis, fix, regression check |
 | `security-review` | Spec, build, PR: authz, secrets, PII, abuse |
 | `code-review` | PR: bugs, compliance to plan, nits capped |
+| `ci-guardrails` | Deploy: CI checks, branch protection, hooks (the deterministic layer) |
 | `release-readiness` | Deploy: migrate, env, rollback, smoke |
 | `incident-postmortem` | Maintain: timeline → new intent.md + regression check |
+| `agent-memory` | Maintain: AGENTS.md upkeep, when a rule becomes a skill or a hook |
 
-Project skills in `.agents/skills/` (performance, design, API security, Prisma,
+Project skills in `.agents/skills/` (performance, design, API security, ORM,
 SEO) still apply when writing code in that repo.
 
 ## Measure
@@ -221,8 +227,9 @@ commits to `spec.md` after `plan.md` exists, repeat incidents per class.
 
 ## Reference
 
-- Verbatim templates (intent, spec prompt, plan, CLAUDE.md, REVIEW.md,
+- Templates (intent, spec prompt, plan, CLAUDE.md, REVIEW.md,
   verifier agent, hooks, evals workflow, bands.yaml, managed settings):
   [templates.md](templates.md)
 - Lesson-by-lesson notes with rules, governance and metrics:
-  [playbook-notes.md](playbook-notes.md)
+  `docs/ai-native-sdlc-playbook-notes.md` in the template repo
+  (https://github.com/trinhtranduc/ai-project-template)

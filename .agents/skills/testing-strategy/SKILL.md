@@ -20,7 +20,7 @@ one-line fix.
 |--------|--------|
 | Pure function / money / dates | Unit test next to the module |
 | API route | Integration or route handler test with mocked DB if that pattern exists; else curl against local server |
-| Prisma schema | migrate in plan; do not test generated client |
+| DB schema / migration | migration reviewed in plan.md; do not test generated client code |
 | UI layout/flow | Browser: happy path + empty + error; screenshot vs mock |
 | Bug | Failing check first, commit it, then fix code only |
 

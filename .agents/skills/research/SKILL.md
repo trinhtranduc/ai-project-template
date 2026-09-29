@@ -24,7 +24,7 @@ matter, and what we would copy vs skip. Do not dump every nav link.
 1. **Live product**: browser for JS/Cloudflare sites; WebFetch/curl for public
    HTML. Homepage, pricing, signup, one detail page, footer, logged-out tools.
 2. **Third-party**: reviews, docs, changelog, status page, App Store, GitHub.
-3. **This repo**: `AGENTS.md`, routes, Prisma schema, existing `docs/research/`.
+3. **This repo**: `AGENTS.md`, routes, DB schema, existing `docs/research/` or `intent/*/research.md`.
 4. **SEO/keywords**: titles, H1s, calculator/tool URLs (each is often a landing
    page).
 
@@ -51,10 +51,10 @@ payments, content/SEO, i18n, trust. Bullet each feature with evidence (quote
 or URL). Mark MVP / later / skip.
 
 ## Sample data
-3–5 concrete examples (broker + rebate rate, price, payout method).
+3–5 concrete examples (entity, price, plan, payout method).
 
 ## Gaps vs this repo
-What we already have, what is missing, risky copies (legal, IB contracts).
+What we already have, what is missing, risky copies (legal, licensing, contracts).
 
 ## Open questions
 ```
@@ -72,6 +72,6 @@ if a grep + 3 files answer it.
 
 ## Hand-off
 
-- New product work → `ai-native-sdlc` (issue + `intent.md` from the thesis).
+- New product work → `sdlc` (issue + `intent.md` from the thesis).
 - Security-sensitive findings (tokens in HTML, IDOR in public API) →
   `security-review` immediately, do not wait for a feature PR.

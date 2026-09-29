@@ -1,4 +1,4 @@
-# Templates (verbatim from the AI-native SDLC playbook)
+# Templates (adapted from the AI-native SDLC playbook)
 
 Adapt names and paths to this repo; keep the section structure.
 
@@ -51,7 +51,7 @@ body:
     id: scope
     attributes:
       label: Affected users and systems
-      placeholder: e.g. public broker list page, /api/public/brokers, admin CMS
+      placeholder: e.g. public listing page, /api/public/items, admin CMS
   - type: textarea
     id: constraints
     attributes:
@@ -66,7 +66,7 @@ body:
     attributes:
       label: Intent folder
       description: Path to intent/<slug>/ once committed
-      placeholder: intent/broker-filters/
+      placeholder: intent/my-change/
   - type: checkboxes
     id: dod
     attributes:
@@ -104,9 +104,9 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Go to /en/brokers
-        2. Filter by regulator "ASIC"
-        3. See empty list although 5 brokers match
+        1. Go to /items
+        2. Filter by category "Books"
+        3. See empty list although 5 items match
     validations:
       required: true
   - type: input
@@ -184,14 +184,14 @@ $
 
 ```bash
 # 1. issue (body from intent.md)
-gh issue create --title "Add regulator filter to broker list" \
-  --label "type:feature" --body-file intent/broker-filters/intent.md
+gh issue create --title "Add category filter to item list" \
+  --label "type:feature" --body-file intent/item-filters/intent.md
 
 # 2. branch named after the issue number
-git checkout -b feat/42-broker-filters
+git checkout -b feat/42-item-filters
 
 # 3. commits reference the issue
-git commit -m "feat(brokers): add regulator filter (#42)"
+git commit -m "feat(items): add category filter (#42)"
 
 # 4. PR from the template; edit body to add "Closes #42"
 git push -u origin HEAD

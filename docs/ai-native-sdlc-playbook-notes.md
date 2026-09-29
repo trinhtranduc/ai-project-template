@@ -4,7 +4,7 @@ Source: https://academy.claude.com/courses/ai-native-sdlc-playbook
 (Anthropic Applied AI team, 14 lessons). Each play follows the same layout:
 What changes -> Getting started (prerequisites, infrastructure) -> How to
 execute -> What it looks like -> Governance -> How to measure (leading /
-lagging). Templates are in [templates.md](templates.md).
+lagging). Templates are in `.agents/skills/sdlc/templates.md`.
 
 ## Introduction
 

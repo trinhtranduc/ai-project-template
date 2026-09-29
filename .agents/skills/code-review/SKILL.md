@@ -22,7 +22,7 @@ Tag every finding with one pass.
 ### Bugs
 
 - Wrong condition, off-by-one, null/undefined, race, stale closure.
-- Locale/routing: links and APIs respect i18n, not hardcoded `/en` only.
+- Locale/routing: if the app is localized, links and APIs respect it; no hardcoded default locale.
 - Error paths: user-visible message vs leaked internals.
 - Data: empty list, pagination, timezone, money/decimal (never float).
 
@@ -33,7 +33,7 @@ Delegate to `security-review`. Summarize Important items here in one line each.
 ### Compliance
 
 - Diff matches `intent/<slug>/spec.md` and `plan.md` if they exist.
-- `AGENTS.md` rules (Prisma version, verify commands, deferred follow-ups).
+- `AGENTS.md` rules (pinned dependency versions, verify commands, frozen areas).
 - No drive-by refactors, dependency bumps, or unrelated files.
 - UI: verify in the browser when layout or user-visible behavior changed.
 
