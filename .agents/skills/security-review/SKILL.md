@@ -4,7 +4,7 @@ description: >-
   Review diffs, APIs, and auth for OWASP-style issues: injection, broken authz,
   secrets, PII in logs, CSRF, rate limits, insecure cookies, supply chain.
   Use when adding endpoints, auth, payments, file upload, webhooks, env vars,
-  Prisma queries, or when the user asks for a security review, threat model,
+  ORM or raw queries, or when the user asks for a security review, threat model,
   or "is this safe to ship".
 ---
 
@@ -32,7 +32,7 @@ List new routes, new tables, new env vars, new third-party calls.
 
 - Validate body/query with a schema (Zod or equivalent); reject unknown fields
   on privileged APIs.
-- Prisma: no raw SQL with string concat; parameterized only.
+- Database: no raw SQL built by string concatenation; parameterized only.
 - Rich text sanitized before store and before render.
 - File upload: type/size allowlist, no user-controlled path, no public exec.
 

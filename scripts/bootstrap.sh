@@ -5,8 +5,13 @@
 #   ./scripts/bootstrap.sh /path/to/project --force
 #   ./scripts/bootstrap.sh /path/to/project --personal-skills
 #
-# --force            overwrite files that already exist
-# --personal-skills  also copy .cursor/skills into ~/.cursor/skills (machine-wide)
+# --force            overwrite files / skills that already exist
+# --personal-skills  also install skills machine-wide in ~/.agents/skills and
+#                    link them into ~/.claude/skills and ~/.cursor/skills
+#
+# Skills are written once to .agents/skills/ and exposed to every agent through
+# symlinks: .claude/skills -> ../.agents/skills (Claude Code) and
+# .cursor/skills -> ../.agents/skills (Cursor). Codex reads .agents/skills directly.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -28,7 +33,10 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+mkdir -p "$TARGET"
 TARGET="$(cd "$TARGET" && pwd)"
+SKILLS_SRC="$ROOT/.agents/skills"
+
 install_file() {
   local rel="$1"
   local src="$ROOT/$rel"
@@ -42,6 +50,53 @@ install_file() {
   echo "write $rel"
 }
 
+# copy_skills <dest-root> <label>: copy each skill dir unless present (or --force)
+copy_skills() {
+  local dest_root="$1" label="$2" skill_dir name dest
+  mkdir -p "$dest_root"
+  while IFS= read -r skill_dir; do
+    name="$(basename "$skill_dir")"
+    dest="$dest_root/$name"
+    if [[ -e "$dest" && "$FORCE" -eq 0 ]]; then
+      echo "skip  $label/$name (exists)"
+      continue
+    fi
+    rm -rf "$dest"
+    cp -R "$skill_dir" "$dest"
+    echo "write $label/$name"
+  done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -type d | sort)
+}
+
+# link_skills <agent-dir> <canonical-skills-dir> <label>
+# If <agent-dir>/skills is absent, symlink the whole folder. If it already
+# exists as a real directory (the project has its own skills there), link each
+# template skill individually so nothing of theirs is touched.
+link_skills() {
+  local agent_dir="$1" canonical="$2" label="$3" link rel skill_dir name
+  link="$agent_dir/skills"
+  if [[ -L "$link" ]]; then
+    echo "ok    $label/skills -> $(readlink "$link") (symlink present)"
+    return
+  fi
+  if [[ ! -e "$link" ]]; then
+    mkdir -p "$agent_dir"
+    rel="$(python3 -c 'import os,sys;print(os.path.relpath(sys.argv[1],sys.argv[2]))' "$canonical" "$agent_dir")"
+    ln -s "$rel" "$link"
+    echo "link  $label/skills -> $rel"
+    return
+  fi
+  while IFS= read -r skill_dir; do
+    name="$(basename "$skill_dir")"
+    if [[ -e "$link/$name" ]]; then
+      echo "skip  $label/skills/$name (exists)"
+      continue
+    fi
+    rel="$(python3 -c 'import os,sys;print(os.path.relpath(sys.argv[1],sys.argv[2]))' "$canonical/$name" "$link")"
+    ln -s "$rel" "$link/$name"
+    echo "link  $label/skills/$name -> $rel"
+  done < <(find "$canonical" -mindepth 1 -maxdepth 1 -type d | sort)
+}
+
 echo "Bootstrapping AI project format into $TARGET"
 
 install_file "AGENTS.md"
@@ -52,25 +107,17 @@ install_file ".github/ISSUE_TEMPLATE/feature.yml"
 install_file ".github/ISSUE_TEMPLATE/bug.yml"
 install_file ".github/ISSUE_TEMPLATE/config.yml"
 install_file ".github/pull_request_template.md"
+install_file ".github/workflows/pr-policy.yml"
+install_file ".github/copilot-instructions.md"
 mkdir -p "$TARGET/intent"
 if [[ ! -e "$TARGET/intent/.gitkeep" ]]; then
   cp "$ROOT/intent/.gitkeep" "$TARGET/intent/.gitkeep"
   echo "write intent/.gitkeep"
 fi
 
-# Skills: copy each skill dir if missing, or --force
-while IFS= read -r skill_dir; do
-  name="$(basename "$skill_dir")"
-  dest="$TARGET/.cursor/skills/$name"
-  if [[ -d "$dest" && "$FORCE" -eq 0 ]]; then
-    echo "skip  .cursor/skills/$name (exists)"
-    continue
-  fi
-  mkdir -p "$TARGET/.cursor/skills"
-  rm -rf "$dest"
-  cp -R "$skill_dir" "$dest"
-  echo "write .cursor/skills/$name"
-done < <(find "$ROOT/.cursor/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+copy_skills "$TARGET/.agents/skills" ".agents/skills"
+link_skills "$TARGET/.claude" "$TARGET/.agents/skills" ".claude"
+link_skills "$TARGET/.cursor" "$TARGET/.agents/skills" ".cursor"
 
 slug=""
 if [[ -d "$TARGET/.git" ]] && command -v git >/dev/null; then
@@ -104,19 +151,11 @@ if [[ -n "$slug" ]] && command -v gh >/dev/null && gh auth status >/dev/null 2>&
 fi
 
 if [[ "$PERSONAL" -eq 1 ]]; then
-  dest_root="${HOME}/.cursor/skills"
-  mkdir -p "$dest_root"
-  while IFS= read -r skill_dir; do
-    name="$(basename "$skill_dir")"
-    dest="$dest_root/$name"
-    if [[ -d "$dest" && "$FORCE" -eq 0 ]]; then
-      echo "skip  ~/.cursor/skills/$name (exists)"
-      continue
-    fi
-    rm -rf "$dest"
-    cp -R "$skill_dir" "$dest"
-    echo "write ~/.cursor/skills/$name"
-  done < <(find "$ROOT/.cursor/skills" -mindepth 1 -maxdepth 1 -type d | sort)
+  copy_skills "$HOME/.agents/skills" "~/.agents/skills"
+  for agent in .claude .cursor; do
+    link_skills "$HOME/$agent" "$HOME/.agents/skills" "~/$agent"
+  done
 fi
 
 echo "Done. Fill AGENTS.md Commands from this project's package.json / Makefile."
+echo "      Then: commit, and protect main (see .agents/skills/ci-guardrails)."

@@ -1,0 +1,28 @@
+# Deterministic SDLC checks: every PR closes an issue and comes from a branch
+# named after it. Make this a required status check once main is protected.
+name: pr-policy
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+permissions:
+  contents: read
+jobs:
+  pr-policy:
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]' && github.actor != 'renovate[bot]'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      HEAD_REF: ${{ github.head_ref }}
+    steps:
+      - name: PR body references an issue
+        run: |
+          if ! grep -Eiq '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' <<<"$PR_BODY"; then
+            echo "::error::PR body must contain 'Closes #<issue>' (see .github/pull_request_template.md)."
+            exit 1
+          fi
+      - name: Branch is named after the issue
+        run: |
+          if ! grep -Eq '^(feat|fix|chore|docs|refactor)/[0-9]+-[a-z0-9._-]+$' <<<"$HEAD_REF"; then
+            echo "::error::Branch '$HEAD_REF' must match <type>/<issue>-<slug>, e.g. feat/42-item-filters."
+            exit 1
+          fi
